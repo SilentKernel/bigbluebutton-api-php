@@ -16,6 +16,7 @@
  * You should have received a copy of the GNU Lesser General Public License along
  * with BigBlueButton; if not, see <http://www.gnu.org/licenses/>.
  */
+
 namespace BigBlueButton;
 
 use BigBlueButton\Core\ApiMethod;
@@ -60,16 +61,22 @@ class BigBlueButton
     protected $urlBuilder;
     protected $jSessionId;
 
-    public function __construct($bbbServerBaseUrl, $securitySecret)
+    public function __construct($bbbServerBaseUrl = null, $securitySecret = null)
     {
-        // Keeping backward compatibility with older deployed versions
-        //$this->securitySecret   = (getenv('BBB_SECURITY_SALT') === false) ? getenv('BBB_SECRET') : $this->securitySecret = getenv('BBB_SECURITY_SALT');
-        //$this->bbbServerBaseUrl = getenv('BBB_SERVER_BASE_URL');
+        // Ours servers are stored in database, so we can pass them
+        if (!is_null($bbbServerBaseUrl)) {
+            $this->bbbServerBaseUrl = $bbbServerBaseUrl;
+        } else {
+            $this->bbbServerBaseUrl = getenv('BBB_SERVER_BASE_URL');
+        }
 
-        // Ours servers are stored in database
-        $this->bbbServerBaseUrl = $bbbServerBaseUrl;
-        $this->securitySecret = $securitySecret;
-        $this->urlBuilder       = new UrlBuilder($this->securitySecret, $this->bbbServerBaseUrl);
+        if (!is_null($securitySecret)) {
+            $this->securitySecret = $securitySecret;
+        } else {
+            // Keeping backward compatibility with older deployed versions
+            $this->securitySecret = (getenv('BBB_SECURITY_SALT') === false) ? getenv('BBB_SECRET') : $this->securitySecret = getenv('BBB_SECURITY_SALT');
+        }
+        $this->urlBuilder = new UrlBuilder($this->securitySecret, $this->bbbServerBaseUrl);
     }
 
     /**
@@ -94,7 +101,7 @@ class BigBlueButton
     */
 
     /**
-     * @param  CreateMeetingParameters $createMeetingParams
+     * @param CreateMeetingParameters $createMeetingParams
      * @return string
      */
     public function getCreateMeetingUrl($createMeetingParams)
@@ -103,7 +110,7 @@ class BigBlueButton
     }
 
     /**
-     * @param  CreateMeetingParameters $createMeetingParams
+     * @param CreateMeetingParameters $createMeetingParams
      * @return CreateMeetingResponse
      * @throws \RuntimeException
      */
@@ -442,9 +449,9 @@ class BigBlueButton
     /**
      * A private utility method used by other public methods to process XML responses.
      *
-     * @param  string            $url
-     * @param  string            $payload
-     * @param  string            $contentType
+     * @param string $url
+     * @param string $payload
+     * @param string $contentType
      * @return SimpleXMLElement
      * @throws \RuntimeException
      */
@@ -458,7 +465,7 @@ class BigBlueButton
             $timeout = 10;
 
             // Needed to store the JSESSIONID
-            $cookiefile     = tmpfile();
+            $cookiefile = tmpfile();
             $cookiefilepath = stream_get_meta_data($cookiefile)['uri'];
 
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);
